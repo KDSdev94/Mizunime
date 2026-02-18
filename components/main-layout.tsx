@@ -12,7 +12,7 @@ export async function MainLayout({ children }: MainLayoutProps) {
     const newSeries = animeList.slice(10, 15);
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 pt-16 md:pt-20 pb-8">
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Main Content */}
                 <div className="lg:w-2/3 min-w-0">

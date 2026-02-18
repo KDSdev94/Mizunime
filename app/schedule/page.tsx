@@ -57,7 +57,7 @@ async function ScheduleContent() {
 
 function ScheduleLoading() {
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 pt-16 md:pt-20 pb-8">
             <div className="flex flex-col lg:flex-row gap-8">
                 <div className="lg:w-2/3">
                     <div className="h-8 w-48 bg-slate-900 dark:bg-slate-800 rounded mb-8 animate-pulse" />

@@ -104,7 +104,7 @@ async function WatchContent({ slug }: { slug: string }) {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-            <div className="container mx-auto px-4 py-6">
+            <div className="container mx-auto px-4 pt-16 md:pt-20 pb-6">
                 <div className="max-w-6xl mx-auto">
                     {/* Breadcrumb */}
                     <div className="text-sm text-gray-400 mb-4 flex gap-2">
@@ -132,7 +132,7 @@ async function WatchContent({ slug }: { slug: string }) {
 
 function WatchLoading() {
     return (
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 pt-16 md:pt-20 pb-6">
             <div className="max-w-4xl mx-auto animate-pulse">
                 <div className="w-full aspect-video bg-slate-900 rounded-xl mb-6" />
                 <div className="h-8 w-1/2 bg-slate-900 rounded mb-4" />

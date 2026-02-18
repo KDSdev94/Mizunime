@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Loader2, X, ChevronRight } from 'lucide-react';
+import { Search, Loader2, X, ChevronRight, Menu } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import { search } from '@/lib/api';
 import type { AnimeItem } from '@/lib/types';
 import { getAnimeSlugFromEpisode, isEpisodeSlug } from '@/lib/utils-episode';
@@ -24,9 +25,18 @@ export function Navbar() {
     const [isSearching, setIsSearching] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     const searchRef = useRef<HTMLDivElement>(null);
     const mobileSearchRef = useRef<HTMLDivElement>(null);
+
+    // Track scroll for navbar background
+    useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Debounced search for suggestions
     useEffect(() => {
@@ -57,15 +67,15 @@ export function Navbar() {
             if (searchRef.current && !searchRef.current.contains(event.target as Node) &&
                 mobileSearchRef.current && !mobileSearchRef.current.contains(event.target as Node)) {
                 setShowSuggestions(false);
-                if (!searchQuery) setIsMobileSearchOpen(false);
+                // We keep isMobileSearchOpen as is, unless user specifically closes it or searches
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [searchQuery]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSearch = (e?: React.FormEvent) => {
+        e?.preventDefault();
         if (searchQuery.trim()) {
             router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
             setShowSuggestions(false);
@@ -74,25 +84,38 @@ export function Navbar() {
     };
 
     return (
-        <nav className="sticky top-0 z-50 shadow-lg bg-[#090a0c] border-b border-[#58d0f6]/10">
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? "bg-[#090a0c]/95 backdrop-blur-md border-b border-[#58d0f6]/10" : "bg-gradient-to-b from-black/80 to-transparent"
+            }`}>
             <div className="container mx-auto px-4">
-                <div className="flex items-center justify-between h-16 gap-4">
+                <div className="flex items-center h-16 md:h-20 gap-4 relative">
 
-                    {/* Left: Logo & Nav Links */}
-                    <div className="flex items-center gap-8">
-                        <Link href="/" className="flex-shrink-0">
+                    {/* Mobile: Hamburger Button (Left) */}
+                    <button
+                        onClick={() => {
+                            setIsMobileMenuOpen(!isMobileMenuOpen);
+                            setIsMobileSearchOpen(false);
+                        }}
+                        className="md:hidden w-10 h-10 flex items-center justify-start rounded-full text-slate-300 hover:text-[#58d0f6] transition-colors z-20"
+                    >
+                        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                    </button>
+
+                    {/* Logo (Center Mobile, Left Desktop) */}
+                    <div className="flex-1 md:flex-none flex items-center justify-center md:justify-start">
+                        <Link href="/" className="z-20 flex absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:left-auto">
                             <Image
                                 src="/header.png"
                                 alt="Mizunime"
                                 width={140}
                                 height={38}
-                                className="h-15 w-auto object-contain"
+                                className="h-10 md:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
                                 priority
                                 unoptimized
                             />
                         </Link>
 
-                        <div className="hidden md:flex items-center gap-1">
+                        {/* Desktop Nav Links */}
+                        <div className="hidden md:flex items-center gap-1 ml-8">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
@@ -117,182 +140,213 @@ export function Navbar() {
                         </div>
                     </div>
 
-                    {/* Right: Search (Desktop) */}
-                    <div className="flex items-center gap-4 flex-1 max-w-md justify-end">
+                    {/* Right Section: Search & Additional Buttons */}
+                    <div className="flex items-center gap-4 flex-none justify-end z-20 md:flex-1">
                         {/* Search Desktop */}
-                        <div className="relative hidden sm:block flex-1 max-w-[320px]" ref={searchRef}>
-                            <form onSubmit={handleSearch} className="relative">
+                        <div className="relative hidden md:block w-full max-w-[300px]" ref={searchRef}>
+                            <form onSubmit={handleSearch} className="relative group">
+                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                    <Search className="w-4 h-4 text-white/50 group-focus-within:text-[#58d0f6] transition-colors" />
+                                </div>
                                 <input
                                     type="text"
                                     placeholder="Cari Anime..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onFocus={() => searchQuery.length >= 3 && setShowSuggestions(true)}
-                                    className="w-full bg-[#16181d] border border-white/10 rounded-full pl-4 pr-10 py-1.5 text-xs text-white focus:outline-none focus:border-[#58d0f6]/50 transition-all font-medium"
+                                    className="w-full bg-[#16181d] border border-white/5 rounded-full pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:bg-[#1c1d24] focus:border-[#58d0f6]/50 focus:ring-2 focus:ring-[#58d0f6]/20 transition-all font-medium"
                                 />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                    {isSearching ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#58d0f6]" />
-                                    ) : (
-                                        <button type="submit" className="text-slate-500 hover:text-[#58d0f6] transition-colors">
-                                            <Search className="w-3.5 h-3.5" />
-                                        </button>
-                                    )}
-                                </div>
+                                {isSearching && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <Loader2 className="w-4 h-4 animate-spin text-[#58d0f6]" />
+                                    </div>
+                                )}
                             </form>
 
                             {/* Suggestion Dropdown (Desktop) */}
-                            {showSuggestions && !isMobileSearchOpen && suggestions.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-[#16181d] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
-                                    <div className="py-2">
-                                        {suggestions.map((anime) => {
-                                            const isEp = isEpisodeSlug(anime.slug);
-                                            const href = isEp ? `/anime/${getAnimeSlugFromEpisode(anime.slug)}` : `/anime/${anime.slug}`;
-                                            const displayTitle = anime.title.split(' Episode ')[0];
+                            <AnimatePresence>
+                                {showSuggestions && suggestions.length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        className="absolute top-full right-0 mt-4 w-[400px] max-h-[60vh] overflow-y-auto bg-[#0d0e12]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 p-2 z-50"
+                                    >
+                                        <div className="space-y-1">
+                                            {suggestions.map((anime) => {
+                                                const isEp = isEpisodeSlug(anime.slug);
+                                                const href = isEp ? `/anime/${getAnimeSlugFromEpisode(anime.slug)}` : `/anime/${anime.slug}`;
+                                                const displayTitle = anime.title.split(' Episode ')[0];
 
-                                            return (
-                                                <Link
-                                                    key={anime.slug}
-                                                    href={href}
-                                                    onClick={() => setShowSuggestions(false)}
-                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-white/5 transition-colors group"
-                                                >
-                                                    <div className="relative w-10 h-14 rounded overflow-hidden flex-shrink-0 bg-slate-800">
-                                                        <Image
-                                                            src={anime.thumbnail || anime.image || ''}
-                                                            alt={anime.title}
-                                                            fill
-                                                            className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                                            sizes="40px"
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-xs font-bold text-slate-200 group-hover:text-[#58d0f6] transition-colors line-clamp-1">
-                                                            {displayTitle}
-                                                        </p>
-                                                        <div className="flex items-center gap-2 mt-0.5">
-                                                            {anime.latest_episode && (
-                                                                <span className="text-[10px] text-slate-500 bg-black/30 px-1.5 py-0.5 rounded">
-                                                                    {anime.latest_episode}
-                                                                </span>
-                                                            )}
-                                                            <span className="text-[10px] text-[#58d0f6] font-medium tracking-wide">
-                                                                {isEp ? 'Episode' : anime.type || 'Series'}
-                                                            </span>
+                                                return (
+                                                    <Link key={anime.slug} href={href} onClick={() => setShowSuggestions(false)}>
+                                                        <div className="gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer group flex items-start">
+                                                            <div className="relative w-12 h-16 rounded-md overflow-hidden flex-shrink-0 bg-slate-800 shadow-sm">
+                                                                <Image
+                                                                    src={anime.thumbnail || anime.image || ''}
+                                                                    alt={anime.title}
+                                                                    fill
+                                                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                                                    sizes="48px"
+                                                                />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="text-sm font-semibold text-white group-hover:text-[#58d0f6] transition-colors truncate">{displayTitle}</h4>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#58d0f6]/20 text-[#58d0f6] font-bold">
+                                                                        {isEp ? 'EP' : anime.type || 'TV'}
+                                                                    </span>
+                                                                    <span className="text-xs text-white/40 truncate">{anime.latest_episode}</span>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </Link>
-                                            );
-                                        })}
-                                        <div className="border-t border-white/5 mt-1 pt-1">
-                                            <button
-                                                onClick={handleSearch}
-                                                className="w-full text-center py-2 text-[10px] font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest"
-                                            >
-                                                Lihat Semua Hasil
-                                            </button>
+                                                    </Link>
+                                                );
+                                            })}
+                                            <div className="border-t border-white/5 mt-2 pt-2">
+                                                <button
+                                                    onClick={() => handleSearch()}
+                                                    className="w-full text-center py-2 text-[10px] font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest"
+                                                >
+                                                    Lihat Semua Hasil
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
-                        {/* Mobile Header Buttons */}
-                        <div className="flex items-center gap-2 sm:hidden">
-                            <button
-                                onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-                                className="p-2.5 rounded-full text-slate-300 hover:text-white bg-white/5 transition-colors"
-                            >
-                                {isMobileSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
-                            </button>
-                        </div>
+                        {/* Mobile Search Toggle Button */}
+                        <button
+                            onClick={() => {
+                                setIsMobileSearchOpen(!isMobileSearchOpen);
+                                setIsMobileMenuOpen(false);
+                            }}
+                            className="md:hidden w-10 h-10 flex items-center justify-end text-slate-300 hover:text-[#58d0f6] transition-colors"
+                        >
+                            {isMobileSearchOpen ? <X className="w-6 h-6" /> : <Search className="w-6 h-6" />}
+                        </button>
                     </div>
                 </div>
+
+                {/* Mobile Search Bar Expansion (Exactly below navbar) */}
+                <AnimatePresence>
+                    {isMobileSearchOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="md:hidden bg-[#0d0e12]/60 backdrop-blur-xl border-b border-white/10 overflow-hidden"
+                            ref={mobileSearchRef}
+                        >
+                            <div className="p-4 pt-2">
+                                <form onSubmit={handleSearch} className="relative">
+                                    <div className="relative flex items-center bg-[#1c1d24]/60 border border-white/10 rounded-xl focus-within:border-[#58d0f6]/50 focus-within:ring-1 focus-within:ring-[#58d0f6]/50 transition-all backdrop-blur-md">
+                                        <Search className="absolute left-4 w-5 h-5 text-white/30" />
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            placeholder="Cari Anime..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full bg-transparent py-4 pl-12 pr-4 text-base text-white placeholder:text-white/20 focus:outline-none"
+                                        />
+                                        {isSearching && (
+                                            <div className="absolute right-4">
+                                                <Loader2 className="w-5 h-5 animate-spin text-[#58d0f6]" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Mobile Search Results */}
+                                    {searchQuery.length >= 3 && suggestions.length > 0 && (
+                                        <div className="mt-2 max-h-[50vh] overflow-y-auto bg-[#0d0e12]/40 backdrop-blur-2xl border border-white/10 rounded-xl p-2">
+                                            <div className="space-y-1">
+                                                {suggestions.map((anime) => {
+                                                    const isEp = isEpisodeSlug(anime.slug);
+                                                    const href = isEp ? `/anime/${getAnimeSlugFromEpisode(anime.slug)}` : `/anime/${anime.slug}`;
+                                                    const displayTitle = anime.title.split(' Episode ')[0];
+
+                                                    return (
+                                                        <Link key={anime.slug} href={href} onClick={() => setIsMobileSearchOpen(false)}>
+                                                            <div className="gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer group flex items-start">
+                                                                <div className="relative w-12 h-16 rounded-md overflow-hidden flex-shrink-0 bg-slate-800">
+                                                                    <Image
+                                                                        src={anime.thumbnail || anime.image || ''}
+                                                                        alt={anime.title}
+                                                                        fill
+                                                                        className="object-cover"
+                                                                        sizes="48px"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-bold text-slate-200 line-clamp-1">{displayTitle}</p>
+                                                                    <div className="flex items-center gap-2 mt-1">
+                                                                        <span className="text-[9px] text-slate-400 bg-black/40 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                                                                            {isEp ? 'EP' : anime.type || 'TV'}
+                                                                        </span>
+                                                                        <span className="text-[9px] text-[#58d0f6] font-bold">
+                                                                            {anime.latest_episode}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </form>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
-            {/* Mobile Search Panel (Expansion below Navbar) */}
-            {isMobileSearchOpen && (
-                <div
-                    className="sm:hidden bg-[#0d0e12] border-t border-white/5 animate-in slide-in-from-top duration-300"
-                    ref={mobileSearchRef}
-                >
-                    <div className="px-4 py-4 space-y-4">
-                        <form onSubmit={handleSearch} className="relative">
-                            <input
-                                autoFocus
-                                type="text"
-                                placeholder="Cari Judul Anime..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-[#1c1d24] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#58d0f6]/50 transition-all font-medium"
-                            />
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                                {isSearching ? (
-                                    <Loader2 className="w-4 h-4 animate-spin text-[#58d0f6]" />
-                                ) : (
-                                    <button type="submit" className="text-slate-500">
-                                        <Search className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
-                        </form>
+            {/* Mobile Menu (Hamburger content) */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="fixed top-16 left-0 right-0 bg-[#0d0e12]/95 backdrop-blur-xl border-b border-white/10 z-[60] md:hidden overflow-hidden"
+                    >
+                        <nav className="flex flex-col p-4 gap-2">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mb-1">Menu Utama</p>
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="px-4 py-3 rounded-xl transition-colors font-medium flex items-center justify-between bg-[#1c1d24] border border-white/5 text-white/80 hover:text-[#58d0f6] active:bg-white/10"
+                                >
+                                    {link.label}
+                                    <ChevronRight className="w-4 h-4 text-slate-500" />
+                                </Link>
+                            ))}
 
-                        {/* Mobile Suggestions Inside Panel */}
-                        {suggestions.length > 0 && (
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Saran Anime</span>
-                                    <button onClick={handleSearch} className="text-[10px] font-bold text-[#58d0f6] flex items-center gap-1">
-                                        LIHAT SEMUA <ChevronRight className="w-3 h-3" />
-                                    </button>
-                                </div>
-                                <div className="grid gap-2">
-                                    {suggestions.map((anime) => {
-                                        const isEp = isEpisodeSlug(anime.slug);
-                                        const href = isEp ? `/anime/${getAnimeSlugFromEpisode(anime.slug)}` : `/anime/${anime.slug}`;
-                                        const displayTitle = anime.title.split(' Episode ')[0];
-
-                                        return (
-                                            <Link
-                                                key={anime.slug}
-                                                href={href}
-                                                onClick={() => {
-                                                    setIsMobileSearchOpen(false);
-                                                    setShowSuggestions(false);
-                                                }}
-                                                className="flex items-center gap-3 p-2 bg-[#1c1d24] rounded-xl border border-white/5 active:bg-white/10 transition-colors"
-                                            >
-                                                <div className="relative w-12 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-800">
-                                                    <Image
-                                                        src={anime.thumbnail || anime.image || ''}
-                                                        alt={anime.title}
-                                                        fill
-                                                        className="object-cover"
-                                                        sizes="48px"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-bold text-slate-200 line-clamp-1">
-                                                        {displayTitle}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[9px] text-slate-400 bg-black/40 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-                                                            {isEp ? 'EP' : anime.type || 'TV'}
-                                                        </span>
-                                                        <span className="text-[9px] text-[#58d0f6] font-bold">
-                                                            {anime.latest_episode}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </Link>
-                                        );
-                                    })}
+                            <div className="pt-4">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mb-2">Kategori Populer</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {supportLinks.map((link) => (
+                                        <Link
+                                            key={link}
+                                            href={`/search?q=${encodeURIComponent(link)}`}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="px-4 py-2 bg-white/5 rounded-xl text-xs font-semibold text-slate-400 text-center hover:bg-white/10 active:bg-white/10"
+                                        >
+                                            {link}
+                                        </Link>
+                                    ))}
                                 </div>
                             </div>
-                        )}
-                    </div>
-                </div>
-            )}
+                        </nav>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </nav>
     );
 }

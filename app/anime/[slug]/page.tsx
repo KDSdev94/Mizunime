@@ -75,7 +75,7 @@ async function DetailContent({ slug }: { slug: string }) {
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
                 />
-                <div className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-4 pt-16 md:pt-20 pb-8">
                     <div className="flex flex-col md:flex-row gap-8">
                         {/* Mobile: Horizontal Card Layout */}
                         <div className="md:hidden mb-4">
@@ -201,7 +201,7 @@ async function DetailContent({ slug }: { slug: string }) {
 
 function DetailLoading() {
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 pt-16 md:pt-20 pb-8">
             <div className="flex flex-col md:flex-row gap-8 animate-pulse">
                 <div className="w-full md:w-1/3 h-96 bg-slate-900 rounded-xl"></div>
                 <div className="w-full md:w-2/3 space-y-4">

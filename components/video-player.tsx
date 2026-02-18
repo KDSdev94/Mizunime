@@ -18,6 +18,12 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({ title, servers, downloads, prevEpisode, nextEpisode, animeSlug }: VideoPlayerProps) {
     const [currentServer, setCurrentServer] = useState(0);
+    const [showOverlay, setShowOverlay] = useState(true);
+
+    const handleServerChange = (index: number) => {
+        setCurrentServer(index);
+        setShowOverlay(true); // Reset protection when changing server
+    };
 
     if (!servers || servers.length === 0) {
         return (
@@ -31,16 +37,30 @@ export function VideoPlayer({ title, servers, downloads, prevEpisode, nextEpisod
 
     return (
         <>
-            {/* Player */}
-            <Card className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border-white/10 mb-6">
-                <iframe
-                    key={currentServer} // Force re-render when server changes
-                    src={servers[currentServer].url}
-                    className="w-full h-full"
-                    allowFullScreen
-                    allow="autoplay; fullscreen"
-                />
-            </Card>
+            {/* Player Container */}
+            <div className="relative w-full aspect-video mb-6">
+                <Card className="w-full h-full bg-black rounded-xl overflow-hidden shadow-2xl border-white/10">
+                    <iframe
+                        key={currentServer} // Force re-render when server changes
+                        src={servers[currentServer].url}
+                        className="w-full h-full"
+                        allowFullScreen
+                        allow="autoplay; fullscreen"
+                    />
+                </Card>
+
+                {/* Ad-Blocker / Click Protection Overlay */}
+                {showOverlay && (
+                    <div
+                        className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-black/5"
+                        onClick={() => setShowOverlay(false)}
+                    >
+                        <div className="bg-blue-600/80 hover:bg-blue-600 text-white px-6 py-3 rounded-full font-bold shadow-lg backdrop-blur-sm transition-all transform hover:scale-105">
+                            Click to Watch
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Episode Navigation - Right after video */}
             {(prevEpisode || nextEpisode || animeSlug) && (
@@ -111,7 +131,7 @@ export function VideoPlayer({ title, servers, downloads, prevEpisode, nextEpisod
                         {servers.map((server, index) => (
                             <Button
                                 key={index}
-                                onClick={() => setCurrentServer(index)}
+                                onClick={() => handleServerChange(index)}
                                 variant={currentServer === index ? 'default' : 'secondary'}
                                 size="sm"
                                 className={currentServer === index ? 'bg-blue-600 hover:bg-blue-700' : ''}

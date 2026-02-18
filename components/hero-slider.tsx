@@ -69,7 +69,7 @@ export function HeroSlider({ animeList }: HeroSliderProps) {
                                     style={{ background: '#dc2626', color: '#fff' }}
                                 >
                                     <Flame className="w-3.5 h-3.5" />
-                                    Trending
+                                    NEw
                                 </div>
 
                                 {/* Title */}
@@ -110,10 +110,10 @@ export function HeroSlider({ animeList }: HeroSliderProps) {
                                 </div>
 
                                 {/* Action buttons */}
-                                <div className="flex gap-4 pt-2">
+                                <div className="flex gap-3 md:gap-4 pt-2">
                                     <Link
                                         href={href}
-                                        className="flex items-center gap-2 px-7 py-3.5 rounded font-bold text-sm transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+                                        className="flex items-center gap-2 px-5 py-2.5 md:px-7 md:py-3.5 rounded-lg md:rounded-xl font-bold text-xs md:text-sm transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
                                         style={{
                                             background: `linear-gradient(135deg, ${PRIMARY}, ${SECONDARY})`,
                                             color: '#fff',
@@ -126,20 +126,20 @@ export function HeroSlider({ animeList }: HeroSliderProps) {
                                             (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 18px rgba(88,208,246,0.4)`;
                                         }}
                                     >
-                                        <Play className="w-4 h-4 fill-white" />
+                                        <Play className="w-3.5 h-3.5 md:w-4 md:h-4 fill-white" />
                                         Tonton Sekarang
                                     </Link>
 
                                     <Link
                                         href={isEpisode ? `/anime/${getAnimeSlugFromEpisode(anime.slug)}` : `/anime/${anime.slug}`}
-                                        className="flex items-center gap-2 px-7 py-3.5 rounded font-bold text-sm text-white transition-all duration-300 hover:bg-white/20"
+                                        className="flex items-center gap-2 px-5 py-2.5 md:px-7 md:py-3.5 rounded-lg md:rounded-xl font-bold text-xs md:text-sm text-white transition-all duration-300 hover:bg-white/20"
                                         style={{
                                             background: 'rgba(255,255,255,0.1)',
                                             backdropFilter: 'blur(8px)',
                                             border: '1px solid rgba(255,255,255,0.15)',
                                         }}
                                     >
-                                        <Info className="w-4 h-4" />
+                                        <Info className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                         Info Lengkap
                                     </Link>
                                 </div>

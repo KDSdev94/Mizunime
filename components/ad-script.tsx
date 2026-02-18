@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 export function AdScript() {
     useEffect(() => {
+        /*
         // Function to check if a cookie exists
         function checkCookie(cookieName: string): boolean {
             const cookies = document.cookie.split(';');
@@ -46,6 +47,7 @@ export function AdScript() {
         return () => {
             document.removeEventListener("click", handleClick);
         };
+        */
     }, []);
 
     return null; // This component doesn't render anything
