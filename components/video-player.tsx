@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, ChevronLeft, ChevronRight, List } from 'lucide-react';
+import { Download, ChevronLeft, ChevronRight, List, Loader2 } from 'lucide-react';
 import type { StreamingServer, DownloadLink } from '@/lib/types';
 
 interface VideoPlayerProps {
@@ -19,10 +19,18 @@ interface VideoPlayerProps {
 export function VideoPlayer({ title, servers, downloads, prevEpisode, nextEpisode, animeSlug }: VideoPlayerProps) {
     const [currentServer, setCurrentServer] = useState(0);
     const [showOverlay, setShowOverlay] = useState(true);
+    const [isLightsOff, setIsLightsOff] = useState(false);
+    const [playerKey, setPlayerKey] = useState(0);
 
     const handleServerChange = (index: number) => {
         setCurrentServer(index);
-        setShowOverlay(true); // Reset protection when changing server
+        setShowOverlay(true);
+        setPlayerKey(prev => prev + 1); // Refresh player on server change
+    };
+
+    const reloadPlayer = () => {
+        setPlayerKey(prev => prev + 1);
+        setShowOverlay(true);
     };
 
     if (!servers || servers.length === 0) {
@@ -37,11 +45,20 @@ export function VideoPlayer({ title, servers, downloads, prevEpisode, nextEpisod
 
     return (
         <>
+            {/* Lights Out Overlay */}
+            {isLightsOff && (
+                <div
+                    className="fixed inset-0 bg-black/95 z-[100] transition-opacity duration-500 cursor-pointer"
+                    onClick={() => setIsLightsOff(false)}
+                    title="Klik untuk menyalakan lampu"
+                />
+            )}
+
             {/* Player Container */}
-            <div className="relative w-full aspect-video mb-6">
+            <div className={`relative w-full aspect-video mb-4 ${isLightsOff ? 'z-[101] ring-4 ring-blue-500/50' : ''}`}>
                 <Card className="w-full h-full bg-black rounded-xl overflow-hidden shadow-2xl border-white/10">
                     <iframe
-                        key={currentServer} // Force re-render when server changes
+                        key={`${currentServer}-${playerKey}`}
                         src={servers[currentServer].url}
                         className="w-full h-full"
                         allowFullScreen
@@ -52,19 +69,51 @@ export function VideoPlayer({ title, servers, downloads, prevEpisode, nextEpisod
                 {/* Ad-Blocker / Click Protection Overlay */}
                 {showOverlay && (
                     <div
-                        className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-black/5"
-                        onClick={() => setShowOverlay(false)}
+                        className="absolute inset-0 z-20 cursor-pointer flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowOverlay(false);
+                        }}
                     >
-                        <div className="bg-blue-600/80 hover:bg-blue-600 text-white px-6 py-3 rounded-full font-bold shadow-lg backdrop-blur-sm transition-all transform hover:scale-105">
-                            Click to Watch
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                                <List className="w-8 h-8 text-white fill-white" />
+                            </div>
+                            <span className="text-white font-bold text-lg tracking-wide bg-black/40 px-4 py-2 rounded-lg">
+                                Klik untuk Play
+                            </span>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Episode Navigation - Right after video */}
+            {/* Player Tools */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 px-1 gap-2 sm:gap-0">
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setIsLightsOff(!isLightsOff)}
+                        className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors bg-white/5 px-3 py-1.5 rounded-full"
+                    >
+                        <div className={`w-2 h-2 rounded-full ${isLightsOff ? 'bg-yellow-400 animate-pulse' : 'bg-slate-500'}`} />
+                        {isLightsOff ? 'Nyalakan Lampu' : 'Matikan Lampu'}
+                    </button>
+                    <button
+                        onClick={reloadPlayer}
+                        className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors bg-white/5 px-3 py-1.5 rounded-full"
+                    >
+                        <Loader2 className="w-3 h-3" />
+                        Refresh Player
+                    </button>
+                </div>
+                <div className="text-[10px] text-slate-500 italic font-medium mt-2 sm:mt-0">
+                    Iklan didalam player adalah dari server video
+                </div>
+            </div>
+
+            {/* Episode Navigation */}
             {(prevEpisode || nextEpisode || animeSlug) && (
-                <div className="flex gap-2 mb-6 flex-wrap justify-center">
+                <div className="flex gap-2 mb-8 flex-wrap justify-center">
                     <Button
                         asChild={!!prevEpisode}
                         disabled={!prevEpisode}

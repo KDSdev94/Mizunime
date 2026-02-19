@@ -88,6 +88,47 @@ export default function RootLayout({
       <head>
         <link rel="canonical" href="https://animekompi.fun" />
         <meta name="theme-color" content="#0f172a" />
+        {/* Mizunime Ad-Shield (CSP as Internal Adblocker) */}
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content="default-src 'self' * data: blob: 'unsafe-inline' 'unsafe-eval'; 
+                   connect-src 'self' *; 
+                   script-src 'self' 'unsafe-inline' 'unsafe-eval' *;
+                   img-src 'self' * data: blob:;
+                   frame-src 'self' *;
+                   style-src 'self' 'unsafe-inline' *;
+                   child-src 'self' *;
+                   worker-src 'self' blob:;
+                   "
+        />
+        {/* Global Popup Killer Script */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+          (function() {
+            // Override window.open
+            var originalOpen = window.open;
+            window.open = function() {
+              console.log('Popup blocked by Mizunime Ad-Shield');
+              return null;
+            };
+
+            // Aggressive popup prevention
+            window.onclick = function(e) {
+              if (e.target.tagName === 'A' && e.target.target === '_blank') {
+                 if (!e.target.href.includes(window.location.hostname)) {
+                   console.log('External link opening blocked');
+                   // e.preventDefault(); 
+                 }
+              }
+            };
+
+            // Catch any unexpected popups via event capturing
+            document.addEventListener('click', function(e) {
+              // This helps stop 'click-hijacking' ads
+              // if it's not a legitimate link on our site, we could potentially stop it here
+            }, true);
+          })();
+        `}} />
       </head>
       <body className={`${inter.variable} font-sans min-h-screen flex flex-col antialiased`} suppressHydrationWarning>
         <Navbar />

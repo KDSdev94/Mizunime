@@ -1,6 +1,5 @@
 'use client';
 
-import { AdScript } from './ad-script';
 import Image from 'next/image';
 
 const PRIMARY = '#58d0f6';
@@ -8,7 +7,6 @@ const PRIMARY = '#58d0f6';
 export function Footer() {
     return (
         <>
-            <AdScript />
             <footer
                 className="py-12 mt-12 bg-[#090a0c] dark:bg-[#090a0c] border-t border-[#58d0f6]/10"
             >
