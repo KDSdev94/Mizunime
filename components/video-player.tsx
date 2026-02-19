@@ -50,15 +50,15 @@ export function VideoPlayer({ title, servers, downloads, prevEpisode, nextEpisod
         <>
             {/* Player Container */}
             <div className="relative w-full aspect-video mb-4">
-                <Card className="w-full h-full bg-black rounded-xl overflow-hidden shadow-2xl border-white/10">
+                <Card className="w-full h-full bg-black rounded-xl shadow-2xl border-white/10">
                     <iframe
                         key={`${currentServer}-${playerKey}`}
                         src={servers[currentServer].url}
-                        className="w-full h-full"
+                        className="w-full h-full rounded-xl"
                         allowFullScreen
-                        allow="autoplay; fullscreen; encrypted-media"
+                        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                         {...(useSandbox && {
-                            sandbox: "allow-same-origin allow-scripts allow-forms",
+                            sandbox: "allow-same-origin allow-scripts allow-forms allow-top-navigation allow-popups allow-popups-to-escape-sandbox",
                             referrerPolicy: "no-referrer"
                         })}
                     />
