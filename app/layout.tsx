@@ -91,42 +91,71 @@ export default function RootLayout({
         {/* Mizunime Ad-Shield (CSP as Internal Adblocker) */}
         <meta
           httpEquiv="Content-Security-Policy"
-          content="default-src 'self' * data: blob: 'unsafe-inline' 'unsafe-eval'; 
-                   connect-src 'self' *; 
+          content="default-src 'self' * data: blob: 'unsafe-inline' 'unsafe-eval';
+                   connect-src 'self' *;
                    script-src 'self' 'unsafe-inline' 'unsafe-eval' *;
                    img-src 'self' * data: blob:;
                    frame-src 'self' *;
                    style-src 'self' 'unsafe-inline' *;
                    child-src 'self' *;
                    worker-src 'self' blob:;
+                   block-all-mixed-content;
                    "
         />
-        {/* Global Popup Killer Script */}
+        {/* Global Popup Killer Script - Enhanced Ad Blocking */}
         <script dangerouslySetInnerHTML={{
           __html: `
           (function() {
-            // Override window.open
+            // Override window.open to block popups
             var originalOpen = window.open;
-            window.open = function() {
-              console.log('Popup blocked by Mizunime Ad-Shield');
+            window.open = function(url, name, specs) {
+              console.log('Popup blocked by Mizunime Ad-Shield:', url);
               return null;
             };
 
-            // Aggressive popup prevention
-            window.onclick = function(e) {
-              if (e.target.tagName === 'A' && e.target.target === '_blank') {
-                 if (!e.target.href.includes(window.location.hostname)) {
-                   console.log('External link opening blocked');
-                   // e.preventDefault(); 
-                 }
-              }
-            };
-
-            // Catch any unexpected popups via event capturing
+            // Block popup windows via features
+            var originalWindow = window.Window;
+            
+            // Prevent click hijacking on links
             document.addEventListener('click', function(e) {
-              // This helps stop 'click-hijacking' ads
-              // if it's not a legitimate link on our site, we could potentially stop it here
+              var target = e.target;
+              while (target && target !== document) {
+                if (target.tagName === 'A' && target.target === '_blank') {
+                  var href = target.href;
+                  if (href && !href.includes(window.location.hostname) && 
+                      !href.includes('animekompi') && 
+                      !href.includes('mizunime')) {
+                    console.log('External popup link blocked:', href);
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }
+                target = target.parentNode;
+              }
             }, true);
+
+            // Block beforeunload popups
+            window.addEventListener('beforeunload', function(e) {
+              e.preventDefault();
+              return '';
+            }, true);
+
+            // Block alert/confirm/prompt abuse
+            var originalAlert = window.alert;
+            var originalConfirm = window.confirm;
+            var originalPrompt = window.prompt;
+            
+            window.alert = function(msg) {
+              console.log('Alert blocked:', msg);
+            };
+            window.confirm = function(msg) {
+              console.log('Confirm blocked:', msg);
+              return false;
+            };
+            window.prompt = function(msg, input) {
+              console.log('Prompt blocked:', msg);
+              return null;
+            };
           })();
         `}} />
       </head>
